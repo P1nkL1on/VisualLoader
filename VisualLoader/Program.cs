@@ -10,6 +10,16 @@ namespace VisualLoader
     {
         static void Main(string[] args)
         {
+            Console.ForegroundColor = ConsoleColor.Black;
+            Console.BackgroundColor = ConsoleColor.White;
+            Console.Clear();
+
+            Console.SetWindowSize(Console.LargestWindowWidth * 7 / 8, Console.LargestWindowHeight * 7 / 8);
+            Console.SetWindowPosition(0, 0);
+            Console.ReadKey();
+           
+            Namegen.makeTree(3000).StartLoading(new Random());
+            Console.ReadKey();
         }
     }
 }

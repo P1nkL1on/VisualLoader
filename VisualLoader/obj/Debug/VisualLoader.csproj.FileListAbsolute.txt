@@ -1,1 +1,6 @@
 D:\microsoft visual studio projects\VisualLoader\VisualLoader\bin\Debug\VisualLoader.exe.config
+D:\microsoft visual studio projects\VisualLoader\VisualLoader\bin\Debug\VisualLoader.exe
+D:\microsoft visual studio projects\VisualLoader\VisualLoader\bin\Debug\VisualLoader.pdb
+D:\microsoft visual studio projects\VisualLoader\VisualLoader\obj\Debug\VisualLoader.csprojResolveAssemblyReference.cache
+D:\microsoft visual studio projects\VisualLoader\VisualLoader\obj\Debug\VisualLoader.exe
+D:\microsoft visual studio projects\VisualLoader\VisualLoader\obj\Debug\VisualLoader.pdb
