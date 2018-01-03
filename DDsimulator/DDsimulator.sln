@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DDsimulator", "DDsimulator.csproj", "{C1E4882D-2E97-4ACB-8EC2-6287B1760697}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DDlib", "..\DDlib\DDlib.csproj", "{20AA28C5-A2B6-4B1F-8A62-C5FE0CB0D35E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C1E4882D-2E97-4ACB-8EC2-6287B1760697}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C1E4882D-2E97-4ACB-8EC2-6287B1760697}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C1E4882D-2E97-4ACB-8EC2-6287B1760697}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C1E4882D-2E97-4ACB-8EC2-6287B1760697}.Release|Any CPU.Build.0 = Release|Any CPU
+		{20AA28C5-A2B6-4B1F-8A62-C5FE0CB0D35E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{20AA28C5-A2B6-4B1F-8A62-C5FE0CB0D35E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{20AA28C5-A2B6-4B1F-8A62-C5FE0CB0D35E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{20AA28C5-A2B6-4B1F-8A62-C5FE0CB0D35E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

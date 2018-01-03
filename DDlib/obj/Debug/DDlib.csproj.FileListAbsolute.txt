@@ -1,0 +1,5 @@
+D:\microsoft visual studio projects\DDlib\obj\Debug\DDlib.csprojResolveAssemblyReference.cache
+D:\microsoft visual studio projects\DDlib\bin\Debug\DDlib.dll
+D:\microsoft visual studio projects\DDlib\bin\Debug\DDlib.pdb
+D:\microsoft visual studio projects\DDlib\obj\Debug\DDlib.dll
+D:\microsoft visual studio projects\DDlib\obj\Debug\DDlib.pdb
