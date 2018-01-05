@@ -10,16 +10,16 @@ namespace DDlib
     {
         public Booka(int pos)
         {
-            BaseStats(pos, "Booka", 10, 4 + pos, 10, 25, 5, new List<AbstractAbility>() { new BookaHit(), new BookaSwipe(), new BookaBomb(), new BookaThrow(), new BookaHeal(), new Move(1, this), new Move(-1, this), new Pass() }, true);
-            health -= 4;
+            BaseStats(pos, "Booka", 10, 4 + pos, 10, 0, 25, 5, new List<AbstractAbility>() { new BookaHit(), new BookaSwipe(), new BookaBomb(this), new BookaThrow(), new BookaHeal(), new Move(3, this), new Move(-3, this), new Pass() }, true);
+            health += 10;
         }
     }
     public class Baka : AbstractUnit
     {
         public Baka(int pos)
         {
-            BaseStats(pos, "@@@@@", 10, 4 + pos, 10, 25, 5, new List<AbstractAbility>() { new BookaHit(), new BookaThrow(), new BookaHeal(), new Pass()}, true );
-            //health -= 4;
+            BaseStats(pos, "Ugly", 10, 4 - pos, 10, 0, 25, 5, new List<AbstractAbility>() { new BookaHit(), new BookaThrow(), new BookaHeal(), new Pass()}, true );
+            AddTags("unholy", "ugly", "test");
         }
     }
 
@@ -28,6 +28,8 @@ namespace DDlib
         public BookaHit()
         {
             BaseStats("Weak attack", new List<int>() { 1, 2, 3 }, new List<int>() { 1,2,3}, 1, false, 50, 15, "Booka's basic attack to hurt enemies.");
+            moveTarget = -1;
+            moveHost = 1;
         }
         public override void UseAbility(AbstractUnit unit)
         {
@@ -40,7 +42,7 @@ namespace DDlib
     {
         public BookaSwipe()
         {
-            BaseStats("Swipe attack", new List<int>() { 1,2,3,4 }, new List<int>() { 1,2,3 }, 2, false, 5, 15, "Booka's fuirous swipe to damage to three of enemies.");
+            BaseStats("Swipe attack", new List<int>() { 1,2,3,4 }, new List<int>() { 1 }, 4, false, 5, 15, "Booka's fuirous swipe to damage to three of enemies.");
         }
         public override void UseAbility(AbstractUnit unit)
         {
@@ -72,20 +74,28 @@ namespace DDlib
         {
             base.UseAbility(unit);
             unit.HealFor(1);
+            unit.buffs.Add(new BookaDef(unit));
             Thread.Sleep(1000);
         }
     }
     class BookaBomb : AbstractAbility
     {
-        public BookaBomb()
+        private AbstractUnit host;
+        public BookaBomb(AbstractUnit host)
         {
+            this.host = host;
             BaseStats("Poison bomb", new List<int>(){3,4}, new List<int>(){3}, 2, false, 60, 3, "Apply poison for far enemies.");
         }
         public override void UseAbility(AbstractUnit unit)
         {
             base.UseAbility(unit);
             unit.RecieveDamage(1);
-            unit.buffs.Add(new Poison(unit, 2, 3));
+
+            Poison p = new Poison(unit, 2, 3, 70);
+            p.TurnOn(80, unit.MOD.ResistBleed);
+
+            unit.buffs.Add(p);
+
             Thread.Sleep(1000);
         }
     }

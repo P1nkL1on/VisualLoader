@@ -39,11 +39,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AbstractUnit.cs" />
-    <Compile Include="Booka.cs" />
-    <Compile Include="Buffs.cs" />
-    <Compile Include="CommonAbilityes.cs" />
-    <Compile Include="Fight.cs" />
+    <Compile Include="Abstrac\AbstractUnit.cs" />
+    <Compile Include="Units\Player\AbstractPlayer.cs" />
+    <Compile Include="Units\Player\Crusader.cs" />
+    <Compile Include="Units\Test\Booka.cs" />
+    <Compile Include="Units\Test\Buffs.cs" />
+    <Compile Include="Abstrac\CommonAbilityes.cs" />
+    <Compile Include="Abstrac\Fight.cs" />
+    <Compile Include="Abstrac\Mod.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -6,3 +6,11 @@ D:\microsoft visual studio projects\DDsimulator\obj\Debug\DDsimulator.exe
 D:\microsoft visual studio projects\DDsimulator\obj\Debug\DDsimulator.pdb
 D:\microsoft visual studio projects\DDsimulator\bin\Debug\DDlib.dll
 D:\microsoft visual studio projects\DDsimulator\bin\Debug\DDlib.pdb
+D:\microsoft visual studio projects\VisualLoader\DDsimulator\bin\Debug\DDsimulator.exe.config
+D:\microsoft visual studio projects\VisualLoader\DDsimulator\obj\Debug\DDsimulator.exe
+D:\microsoft visual studio projects\VisualLoader\DDsimulator\obj\Debug\DDsimulator.pdb
+D:\microsoft visual studio projects\VisualLoader\DDsimulator\bin\Debug\DDsimulator.exe
+D:\microsoft visual studio projects\VisualLoader\DDsimulator\bin\Debug\DDsimulator.pdb
+D:\microsoft visual studio projects\VisualLoader\DDsimulator\bin\Debug\DDlib.dll
+D:\microsoft visual studio projects\VisualLoader\DDsimulator\bin\Debug\DDlib.pdb
+D:\microsoft visual studio projects\VisualLoader\DDsimulator\obj\Debug\DDsimulator.csprojResolveAssemblyReference.cache

@@ -17,6 +17,8 @@ namespace DDlib
         protected string skillDescr;
         protected int acc;
         protected int crit;
+        public int moveHost;
+        public int moveTarget;
 
         public override string ToString()
         {
@@ -48,7 +50,12 @@ namespace DDlib
                         res += other[i];
                 }
             }
-            return String.Format(" [{2}]\tACC: {3}  CRT: {4}\n   {0} : {1}\n\n", skillName, skillDescr, res, acc, crit);
+            return String.Format(" [{0}]\t{1}\n\n", res, DESCR());
+        }
+
+        protected virtual string DESCR()
+        {
+            return String.Format("ACC: {0}  CRT: {1}\n   {2} : {3}", acc, crit, skillName, skillDescr);
         }
 
         public bool CanBeUsedFrom(int pos)
@@ -81,6 +88,9 @@ namespace DDlib
             this.castOnAllies = toallies;
             this.acc = acc;
             this.crit = crit;
+
+            moveHost = 0;
+            moveTarget = 0;
         }
 
         public virtual List<AbstractUnit> SelectTarget(List<AbstractUnit> allies, List<AbstractUnit> enemyes)
@@ -114,10 +124,10 @@ namespace DDlib
                             case ConsoleKey.RightArrow:
                                 incr = -1;
                                 break;
-                            case ConsoleKey.UpArrow:
+                            case ConsoleKey.DownArrow:
                                 incr = 1;
                                 break;
-                            case ConsoleKey.DownArrow:
+                            case ConsoleKey.UpArrow:
                                 incr = -1;
                                 break;
                             case ConsoleKey.Escape:
@@ -176,40 +186,76 @@ namespace DDlib
 
         public virtual void UseAbility(AbstractUnit unit)
         {
-            
-            Thread.Sleep(500);
-
             Console.ForegroundColor = ConsoleColor.Magenta;
-            Console.WriteLine(String.Format("Used a '{0}' on a {1}", skillName, unit.ToString()));
-            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.WriteLine("... " + unit.ToString() + " -- success");
+            Console.Beep(600, 100);
         }
 
-        public virtual bool TryUseAbility(AbstractUnit host, List<AbstractUnit> to)
+        public virtual void UseAbilityHostEffect(AbstractUnit host)
         {
-            Console.Beep(600, 200);
+
+        }
+
+        public virtual void TryUseAbility(AbstractUnit host, List<AbstractUnit> to)
+        {
+            int nowIn = Console.CursorTop;
+            Console.Beep(100, 50);
             Random rnd = new Random();
+
+            UseAbilityHostEffect(host);
+            host.MoveFor = moveHost;
+
+            Thread.Sleep(100);
+            Console.ForegroundColor = ConsoleColor.Magenta;
+            Console.WriteLine(String.Format("Used a '{0}' on a...", skillName));
+
             foreach (AbstractUnit a in to)
             {
-                // test for missing dismissing
-                if (host.Acc + acc > rnd.Next(100))
-                    UseAbility(a);
+                int rolled = rnd.Next(100);
+                if (host.Acc + acc > rolled)
+                {
+                    if (host.Acc + acc - a.Ddg > rolled)
+                    {
+                        UseAbility(a);
+                        a.MoveFor = moveTarget;
+                    }
+                    else
+                    {
+                        Console.ForegroundColor = ConsoleColor.DarkRed;
+                        Console.WriteLine(String.Format("= = base ACC: {0}%; skill ACC: {1}%; target DDG: {2};",
+                            host.Acc, acc, a.Ddg));
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("... " + a.ToString() + " -- DODGE");
+                        for (int i = 0; i < 3; i++) Console.Beep(rnd.Next(800, 1000), 50);
+                        Thread.Sleep(300);
+                    }
+                }
                 else
                 {
+                    Console.ForegroundColor = ConsoleColor.DarkRed;
+                    Console.WriteLine(String.Format("= = base ACC: {0}%; skill ACC: {1}%;",
+                        host.Acc, acc));
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine(host.ToString() + " MISS with " + skillName + " on " + a.ToString() + "!!!");
-                    Console.Beep(300, 700);
-                    Thread.Sleep(1500);
+                    Console.WriteLine("... " + a.ToString() + " -- MISS");
+                    Console.Beep(300, 500);
+                    Thread.Sleep(300);
                 }
             }
-            return true;
-            return false;
-        }
 
-        
+            awaitEndOfAbility(400 * (Console.CursorTop - nowIn));
+        }
+        protected virtual void awaitEndOfAbility(int X)
+        {
+            Thread.Sleep(X);
+        }
     }
+
 
     public abstract class AbstractUnit
     {
+        public Mod MOD;
+        protected string namepostfix;
+        protected List<String> tags;
         protected string name;
         protected int healthMax;
         protected int health;
@@ -218,13 +264,17 @@ namespace DDlib
         protected int acc;
         protected int crit;
         protected int spd;
+        protected int dodge;
 
         public List<AbstractBuff> buffs;
 
-        public int Def { get { return def; } }
-        public int Acc { get { return acc; } }
-        public int Crit { get { return crit; } }
-        public int Spd { get { return spd; } }
+        public int Def { get { return MOD.Def(def); } }
+        public int Acc { get { return MOD.Acc(acc); } }
+        public int Crt { get { return MOD.Crt(crit); } }
+        public int Spd { get { return MOD.Spd(spd); } }
+        public int Ddg { get { return MOD.Ddg(dodge); } }
+
+        public int getMaxHealth { get { return healthMax; } }
 
         public int position;
 
@@ -234,7 +284,7 @@ namespace DDlib
 
         protected List<AbstractAbility> abs;
 
-        protected void BaseStats(int pos, string name, int health, int spd, int def, int acc, int crit, List<AbstractAbility> abs, bool leavesCorpse)
+        protected void BaseStats(int pos, string name, int health, int spd, int def, int dodge, int acc, int crit, List<AbstractAbility> abs, bool leavesCorpse)
         {
             this.position = pos; this.name = name;
             this.healthMax = this.health = health;
@@ -243,10 +293,48 @@ namespace DDlib
             this.crit = crit;
             this.abs = abs;
             this.spd = spd;
+            this.dodge = dodge;
             this.onDeathDoor = false;
             buffs = new List<AbstractBuff>();
             this.leavesCorpse = leavesCorpse;
             this.MoveFor = 0;
+            namepostfix = numbs[position];
+            MOD = new Mod(0);
+            tags = new List<string>();
+        }
+
+        public void AddTags(params String[] tags)
+        {
+            foreach (string tag in tags)
+                if (this.tags.IndexOf(tag) < 0)
+                    this.tags.Add(tag);
+        }
+        public void RemoveTags(params String[] tags)
+        {
+            foreach (string tag in tags)
+                this.tags.Remove(tag);
+        }
+
+        public void Unstun()
+        {
+            for (int i = 0; i < buffs.Count; i++)
+                if (buffs[i] as Stun != null)
+                {
+                    buffs[i].Remove();
+                    buffs.RemoveAt(i);
+                    i--;
+                }
+            Console.WriteLine(ToString()+ " is back to fight!");
+            Console.Beep(400, 400);
+
+            StunResist sr = new StunResist(this, 2);
+            sr.TurnOn(0, 0);
+            buffs.Add(sr);
+        }
+
+        public bool Is(string tag)
+        {
+            return tags.IndexOf(tag) >= 0;
         }
 
         public bool isDead()
@@ -257,28 +345,35 @@ namespace DDlib
         {
             return health == 0;
         }
-        public virtual void RecieveDamage(int X)
+        public void RecieveDamage(int X)
         {
+            RecieveDamage(X, false);
+        }
+        public virtual void RecieveDamage(int X, bool ignoreDef)
+        {
+            Console.ForegroundColor = ConsoleColor.Gray;
 
             int healthwas = health;
-            health -= Math.Max(0, (int)(.5 + X / 100.0 * (100 - Def)));
-            Console.WriteLine(ToString() + " damaged for " + (healthwas - health));
+            health -= Math.Max(0, (int)(.5 + X / 100.0 * (100 - ((ignoreDef) ? 0 : Def))));
+            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.WriteLine(String.Format("    {0} recieved {1} dmg ( DEF={2}% -> blocked {3} dmg)", ToString(), (healthwas - health), Def, X - (healthwas - health)));
             Console.Beep(100, 150);
-            Thread.Sleep(500);
+            Thread.Sleep(1000);
         }
         public virtual void HealFor(int X)
         {
             int washealth = health;
             health = Math.Min(healthMax, health + X);
-            Console.Beep(300, 150);
-            Console.WriteLine(ToString() + " healed for " + (health - washealth));
+            Console.Beep(1500, 350);
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("    " + ToString() + " healed for " + (health - washealth));
             Thread.Sleep(500);
         }
 
-        static string[] numbs = new string[] { "0","I", "II", "III", "IV", "V"};
+        static string[] numbs = new string[] { "0", "I", "II", "III", "IV", "V" };
         public override string ToString()
         {
-            return name + " " + numbs[position];
+            return name + " " + namepostfix;
         }
 
         public string HealthToString(int leng)
@@ -290,7 +385,7 @@ namespace DDlib
 
             if (health < healthMax * 2 / 3) Console.ForegroundColor = ConsoleColor.Yellow;
             if (health < healthMax / 3) Console.ForegroundColor = ConsoleColor.Red;
-            if (health <= 0 || name.IndexOf("'s corpse")>=0) Console.ForegroundColor = ConsoleColor.DarkMagenta;
+            if (health <= 0 || name.IndexOf("'s corpse") >= 0) Console.ForegroundColor = ConsoleColor.DarkMagenta;
             return res;
         }
 
@@ -303,7 +398,8 @@ namespace DDlib
         {
             string res = "";
             for (int i = 0; i < buffs.Count; i++)
-                res += " " + buffs[i].symbol;
+                if (!buffs[i].isFinished())
+                    res += " " + buffs[i].symbol;
             return res;
         }
 
@@ -313,7 +409,7 @@ namespace DDlib
             Console.ForegroundColor = ConsoleColor.DarkGreen;
             Console.WriteLine("\"" + name + "\"\n");// Console.WriteLine(HealthToString(15));
             Console.WriteLine("Base stats:");
-            Console.WriteLine(String.Format("   SPD: {0}\tACC: {1}%\n   CRT: {2}%\tDEF: {3}%\n", spd, acc, crit, def));
+            Console.WriteLine(String.Format("   ACC: {0}\tDDG: {1}%\t\tSPD: {4}\n   CRT: {2}%\tDEF: {3}%\n", Acc, Ddg, Crt, Def, Spd));
             for (int i = 0; i < abs.Count; i++)
             {
                 Console.ForegroundColor = (parameterSelected == i) ? ConsoleColor.White : ConsoleColor.DarkGray;
@@ -459,20 +555,23 @@ namespace DDlib
     {
         public Corpse(string name, int healthmax, int pos)
         {
-            BaseStats(pos, name, healthmax, 0, 0, 0, 0, new List<AbstractAbility>() { new Pass() }, false); 
+            BaseStats(pos, name, healthmax, 0, 0, 0, 0, 0, new List<AbstractAbility>() { new Pass() }, false);
         }
     }
 
     public abstract class AbstractBuff
     {
+        static Random rnd = new Random();
         protected string name;
         protected string descr;
         public char symbol;
-        protected int turnsLeft;
+        public int turnsLeft;
         protected AbstractUnit target;
         protected bool enabled;
 
-        public void BaseStats(string name, string descr, char symbol, int turnsLeft, AbstractUnit target)
+        public int applyChance;
+
+        public void BaseStats(string name, string descr, int applyChance, char symbol, int turnsLeft, AbstractUnit target)
         {
             enabled = false;
             this.turnsLeft = turnsLeft;
@@ -480,26 +579,31 @@ namespace DDlib
             this.descr = descr;
             this.symbol = symbol;
             this.target = target;
-            //
-            CheckStatus();
+            this.applyChance = applyChance;
         }
 
-        public void Tick (){
-            CheckStatus();
-            TickEffect();
-            turnsLeft--;
+        public void Tick()
+        {
+            CheckEnd();
+            if (!isFinished())
+            {
+                TickEffect();
+                turnsLeft--;
+            }
         }
         public bool isFinished()
         {
             return turnsLeft <= 0;
         }
-        public virtual void Apply() {
+        public virtual void Apply()
+        {
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Applied " + name + " to " + target.ToString());
-            Console.Beep(300, 300);
-            Thread.Sleep(400);
+            Console.WriteLine(String.Format("    {0} recieved a '{1}' ({3}) buff for {2} turns", target.ToString(), name, turnsLeft, symbol.ToString()));
+            Console.Beep(900, 200);
+            Thread.Sleep(80);
         }
-        public virtual void Remove() {
+        public virtual void Remove()
+        {
             Console.ForegroundColor = ConsoleColor.DarkGreen;
             Console.WriteLine("Removed " + name + " from " + target.ToString());
             Console.Beep(130, 300);
@@ -507,12 +611,52 @@ namespace DDlib
         }
         public virtual void TickEffect() { }
 
-        public void CheckStatus()
+        public void TurnOn(int hostApplyChance, int targetResist)
         {
             if (!isFinished())
-            { if (!enabled) { enabled = true; Apply(); } }
-            else
-            { if (enabled) { enabled = false; Remove(); } }
+            {
+                if (!enabled)
+                {
+                    // CHANCE TO NOT APPLY!
+                    int rolled = rnd.Next(100);
+
+                    if (rolled < applyChance + hostApplyChance - targetResist)
+                    {
+                        enabled = true; Apply();
+                    }
+                    else
+                    {
+                        Console.ForegroundColor = ConsoleColor.DarkRed;
+                        Console.WriteLine(String.Format("= = base CHANCE: {0}  host CHANCE: {1}  target RESIST: {2}",
+                            applyChance, hostApplyChance, targetResist));
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine(String.Format("# # {0} -- RESIST!", name));
+                        turnsLeft = 0;
+                    }
+
+                }
+            }
+        }
+        public void CheckEnd()
+        {
+            if (enabled && isFinished())
+            { enabled = false; Remove(); }
+        }
+        public override string ToString()
+        {
+            return String.Format("{3}  {0} ({1} turns left) : {2}", name, turnsLeft, descr, symbol.ToString());
         }
     }
+    //public enum BuffType
+    //{
+    //    blight = 14,
+    //    bleed = 15,
+    //    stun = 16,
+    //    move = 17,
+    //    debuff = 18,
+
+    //    buff = 5,
+    //    neutral = 6,
+    //    self = 7
+    //}
 }

@@ -21,11 +21,14 @@ namespace DDlib
 
         public bool Start()
         {
-            while (left.Count != 0 && right.Count != 0)
+            do
             {
-                Turn();
-            }
-            bool leftWins = left.Count != 0;
+                Thread.Sleep(500);
+                Console.SetCursorPosition(wid * 4, 0);
+                Console.WriteLine("NEXT TURN!");
+                Console.Beep(400, 20);
+            } while (!Turn());
+            bool leftWins = CountNonDead(left) != 0;
             if (leftWins)
             {
                 Console.ForegroundColor = ConsoleColor.Magenta;
@@ -54,15 +57,17 @@ namespace DDlib
             List<int> idexes = new List<int>();
             List<int> speeds = new List<int>();
             for (int i = 0; i < left.Count; i++)
-            {
-                idexes.Add(i + 1);
-                speeds.Add(left[i].Spd);
-            }
+                if (left[i] as Corpse == null)
+                {
+                    idexes.Add(i + 1);
+                    speeds.Add(left[i].Spd);
+                }
             for (int i = 0; i < right.Count; i++)
-            {
-                idexes.Add(-i - 1);
-                speeds.Add(right[i].Spd);
-            }
+                if (right[i] as Corpse == null)
+                {
+                    idexes.Add(-i - 1);
+                    speeds.Add(right[i].Spd);
+                }
 
             idexes = sortBySpd(idexes, speeds);
 
@@ -86,14 +91,19 @@ namespace DDlib
 
                 bool isEnemy = !TraceFighters(pos, out unit, left, right);
                 unit.TickAllBuffs();
-                if (!unit.isDead())
+                if (!unit.isDead() && unit as Corpse == null)
                 {
-                    if (isEnemy)
-                        unit.TryRandomlySelectAbility(rnd, right, left);
+                    if (!unit.Is("stunned"))
+                    {
+                        if (isEnemy)
+                            unit.TryRandomlySelectAbility(rnd, right, left);
+                        else
+                            //unit.TryRandomlySelectAbility(rnd, left, right);
+                            PlayerControl(unit);
+                        CheckMovement();
+                    }
                     else
-                        //unit.TryRandomlySelectAbility(rnd, left, right);
-                        unit.TrySelectAbility(left, right);
-
+                        unit.Unstun();
                 }
                 List<int> deadIndexes = CheckForDeath();
                 // remove dead characters from a queue
@@ -110,38 +120,77 @@ namespace DDlib
                     AbstractUnit misc;
                     TraceFighters(pos, out misc, left, right);
                     Thread.Sleep(500);
+                    // kostil
+
                 }
-                if (left.Count == 0 || right.Count == 0)
+                if (CountNonDead(left) == 0 || CountNonDead(right) == 0)
                     return true;
             }
 
             return false;
         }
 
+        void PlayerControl(AbstractUnit unit)
+        {
+            unit.TrySelectAbility(left, right);
+        }
+
+        void CheckMovement()
+        {
+            foreach (AbstractUnit a in left)
+                if (a.MoveFor != 0)
+                    MoveIn(a, left, a.MoveFor);
+            foreach (AbstractUnit a in right)
+                if (a.MoveFor != 0)
+                    MoveIn(a, right, a.MoveFor);
+        }
+
         List<int> CheckForDeath()
         {
             List<int> res = new List<int>();
             bool everDead = false;
+            int wait = 0;
             for (int i = 0; i < 2; i++)
             {
                 List<AbstractUnit> chooseIn = (i == 0) ? left : right;
                 for (int j = 0; j < chooseIn.Count; j++)
                     if (chooseIn[j].isDead())
                     {
-                        if (chooseIn[j].leavesCorpse) {
+                        Console.ForegroundColor = ConsoleColor.DarkRed;
+                        Console.WriteLine(String.Format("    {0} dead!", chooseIn[j].ToString()));
+                        wait += 1500;
+                        if (chooseIn[j].leavesCorpse)
+                        {
                             Random rnd = new Random();
+                            Console.WriteLine(String.Format("    ...and leaves a corpse with {0} HP", chooseIn[j].getMaxHealth / 2));
                             for (int z = 0; z < 5; z++)
                                 Console.Beep(rnd.Next(100, 500), rnd.Next(50, 100));
                             chooseIn[j] = chooseIn[j].CreateCorpseOfThis();
                         }
                         else
                         {
+                            foreach (AbstractUnit a in chooseIn)
+                                if (a.position > chooseIn[j].position)
+                                    a.position--;
                             chooseIn.RemoveAt(j); res.Add((j + 1) * ((1 - i) * 2 - 1)); j--;
+                            
+
                             if (!everDead) everDead = true;
                         }
                     }
             }
+            Console.ForegroundColor = ConsoleColor.Gray;
+            Thread.Sleep(wait);
             return res;
+        }
+
+        int CountNonDead(List<AbstractUnit> list)
+        {
+            int counter = 0;
+            foreach (AbstractUnit a in list)
+                if (a as Corpse == null)
+                    counter++;
+            return counter;
         }
 
         List<int> sortBySpd(List<int> inds, List<int> spd)
@@ -163,23 +212,39 @@ namespace DDlib
             return inds;
         }
 
+        bool MoveIn(AbstractUnit a, List<AbstractUnit> where, int much)
+        {
+            if (a as Corpse != null)
+                a.RecieveDamage(a.getMaxHealth + 1);
+
+            int res = Math.Max(1, Math.Min(where.Count, a.position - much)),
+                side = (much > 0) ? 1 : -1;
+            foreach (AbstractUnit b in where)
+                if (b != a && ((much > 0 && b.position < a.position && b.position >= res) || (much < 0 && b.position > a.position && b.position <= res)))
+                    b.position += side;
+            a.position = res;
+            a.MoveFor = 0;
+            return true;
+        }
+
         public static bool TraceFighters(int position, out AbstractUnit unit, List<AbstractUnit> left, List<AbstractUnit> right)
         {
             return TraceFighters(position, out unit, left, right, 0);
         }
 
+        static int Ystart = 3;
+        static int wid = 15;
+        static int widHP = wid - 2;
         public static bool TraceFighters(int position, out AbstractUnit unit, List<AbstractUnit> left, List<AbstractUnit> right, int far)
         {
             Console.Clear();
-            int Ystart = 3,
-                wid = 15,
-                widHP = wid - 2;
+
             bool isAlly = false, isEnemy = false;
             AbstractUnit a = null, b = null;
             for (int i = 0; i < left.Count; i++)
             {
                 isAlly = left[i].position == position;
-                Console.ForegroundColor = ((far >= 0)? (left[i].position >= position && left[i].position <= position + far) : isAlly) ? ConsoleColor.DarkGreen : ConsoleColor.Gray;
+                Console.ForegroundColor = ((far >= 0) ? (left[i].position >= position && left[i].position <= position + far) : isAlly) ? ConsoleColor.DarkGreen : ConsoleColor.Gray;
                 Console.SetCursorPosition((4 - left[i].position) * wid, Ystart);
                 Console.Write(left[i].ToString());
                 Console.SetCursorPosition((4 - left[i].position) * wid, Ystart + 1);
@@ -195,7 +260,7 @@ namespace DDlib
             for (int i = 0; i < right.Count; i++)
             {
                 isEnemy = right[i].position == -position;
-                Console.ForegroundColor = ((far <= 0)? (right[i].position >= -position && right[i].position <= -position - far) : isEnemy) ? ConsoleColor.DarkRed : ConsoleColor.Gray;
+                Console.ForegroundColor = ((far <= 0) ? (right[i].position >= -position && right[i].position <= -position - far) : isEnemy) ? ConsoleColor.DarkRed : ConsoleColor.Gray;
                 Console.SetCursorPosition((4 + right[i].position) * wid, Ystart);
                 Console.Write(right[i].ToString());
 
